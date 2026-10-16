@@ -1,0 +1,38 @@
+---
+title: "VelocidadCrecimiento"
+format: revealjs
+editor: visual
+---
+
+```{r librerias}
+library(dplyr)
+library(data.table)
+library(openxlsx)
+```
+
+```{r leer bases}
+
+r2 <- readRDS("D:/Vero/ENDI_Analisis/Resultados_mes12/Analisis_velocidad_Crecimiento/Proy_velocidad/velocidad_crecimiento_inec/r2.rds")
+r3 <- readRDS("D:/Vero/ENDI_Analisis/Resultados_mes12/Analisis_velocidad_Crecimiento/Proy_velocidad/Bases/salud_nin_reg_LIS_R3.RDS")
+
+```
+
+
+```{r}
+# 1) Niños cuya fila endi tiene edad_diff < 30
+ids_ok <- r3[levantamiento == "endi" & edad_diff <= 30, unique(id_per)]
+
+# 2) De esos niños, última y penúltima fila
+R2_ult <- r3[id_per %in% ids_ok,
+                       .SD[tail(seq_len(.N), 2)],
+                       by = id_per]
+
+```
+
+
+## Consistencia de las mediciones ENDI 
+
+
+## Velocidad de crecimiento
+
+

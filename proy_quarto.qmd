@@ -3,6 +3,7 @@ title: "Análisis Velocidad de crecimiento"
 format:
   revealjs:
     theme: [default, styles.css]
+    embed-resources: true
 ---
 
 ```{r librerias, include=FALSE}
@@ -269,9 +270,9 @@ r2_ok %>%
   kable(col.names = c("Desagregación", "Nro. de niños", "Total de banderas positivas", "Porcentaje de banderas positivas", 
                       "Total de banderas negativas", "Porcentaje de banderas negativas"),
         align = c("lrrcrc")) %>% 
-  # pack_rows("Sexo", 2, 3) %>%
-  # pack_rows("Provincia", 4, 26) %>% 
-  kable_classic()
+  pack_rows("Sexo", 1, 2) %>%
+  pack_rows("Provincia", 3, 25) %>% 
+  kable_classic(font_size = 12)
 
 ```
 
@@ -365,9 +366,9 @@ r3_ok %>%
   kable(col.names = c("Desagregación", "Nro. de niños", "Total de banderas positivas", "Porcentaje de banderas positivas", 
                       "Total de banderas negativas", "Porcentaje de banderas negativas"),
         align = c("lrrcrc")) %>% 
-  # pack_rows("Sexo", 2, 3) %>%
-  # pack_rows("Provincia", 4, 26) %>% 
-  kable_classic()
+  pack_rows("Sexo", 1, 2) %>%
+  pack_rows("Provincia", 3, 25) %>% 
+  kable_classic(font_size = 12)
 
 ```
 
@@ -411,10 +412,35 @@ r3_wide <- r3 %>%
 
 cor_r3_ok <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
 
+r2_graph <- ggplot(r2_ok %>% 
+                     filter(levantamiento == "endi" & edad_diff <= 30 &
+                              flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0)) + 
+  geom_point(aes(x = edad_diff, y = talla_diff, alpha = p_edadmeses)) +
+  scale_alpha(range = c(0.2, 0.9), name = "Edad meses") +
+  ylim(0,5.1)+
+  labs(title = "Ronda 2")+
+  xlab("Diferencia de edad en días") +
+  ylab("Diferencia de talla en cm") +
+  theme_bw()
+
+r3_graph <- ggplot(r3_ok %>% 
+                     filter(levantamiento == "endi" & edad_diff <= 30 &
+                              flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0)) + 
+  geom_point(aes(x = edad_diff, y = talla_diff, alpha = p_edadmeses)) +
+  scale_alpha(range = c(0.2, 0.9), name = "Edad meses") +
+  ylim(0,5.1)+
+  labs(title = "Ronda 3")+
+  xlab("Diferencia de edad en días") +
+  ylab("Diferencia de talla en cm") +
+  theme_bw()
+
 ```
 
 En Ronda 2, sin eliminar los valores implausibles por velocidad de crecimiento existe una correlacion de `r cor_r2` entre la última medición de control de Niño Sano y la medición ENDI. Eliminando los valores implausibles la correlación sube a `r cor_r2_ok`. Para Ronda 3, sin eliminar valores implausibles la correlación existe una correlación de `r cor_r3`. Eliminando los valores implausibles la correlación sube a `r cor_r3_ok`.
 
+```{r, echo=FALSE}
+r2_graph | r3_graph
+```
 
 ```{r est r2, include=FALSE}
 

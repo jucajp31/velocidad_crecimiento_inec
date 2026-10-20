@@ -13,7 +13,6 @@ library(openxlsx)
 library(collapse)
 library(ggplot2)
 library(patchwork)
-
 library(knitr)
 library(kableExtra)
 
@@ -49,341 +48,6 @@ R3_filt <- filt_base(r3)
 
 ```
 
-## Consistencia de las mediciones ENDI
-
-## Inconsistencia por velocidad de crecimiento
-Para el análisis nos quedamos únicamente con las mediciones que tengan una diferencia máxima de hasta 30 días entre el último control de Niño Sano en MSP y la medición de talla/longitud de la ENDI.
-
-Ronda 2
-```{r velocidad crecimiento r2, echo=FALSE}
-
-dpa <- read.xlsx("../cod_dpa.xlsx",
-                 sheet = "prov") %>% 
-  mutate(DPA_PROVIN = as.numeric(DPA_PROVIN)) %>% 
-  rename(prov = DPA_PROVIN)
-
-r2_ok <- r2 %>%
-  filter(levantamiento == "endi" & edad_diff <=30) %>% 
-  mutate(flg_delta_talla_negativo = case_when(d_dia_talla < 0 ~ 1,
-                                              T ~ 0),
-  flg_delta_talla_positivo = case_when(
-           (sexo == '1' & p_edadmeses <= 2 & d_dia_talla > 0.185) |
-             (sexo == '1' & p_edadmeses == 3 & d_dia_talla > 0.155) |
-             (sexo == '1' & p_edadmeses == 4 & d_dia_talla > 0.13) |
-             (sexo == '1' & p_edadmeses == 5 & d_dia_talla > 0.111667) |
-             (sexo == '1' & p_edadmeses == 6 & d_dia_talla > 0.098333) |
-             (sexo == '1' & p_edadmeses == 7 & d_dia_talla > 0.088333) |
-             (sexo == '1' & p_edadmeses == 8 & d_dia_talla > 0.083333) |
-             (sexo == '1' & p_edadmeses == 9 & d_dia_talla > 0.08) |
-             (sexo == '1' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
-             (sexo == '1' & p_edadmeses == 11 & d_dia_talla > 0.075) |
-             (sexo == '1' & p_edadmeses == 12 & d_dia_talla > 0.073333) |
-             (sexo == '1' & p_edadmeses == 13 & d_dia_talla > 0.071667) |
-             (sexo == '1' & p_edadmeses == 14 & d_dia_talla > 0.07) |
-             (sexo == '1' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
-             (sexo == '1' & p_edadmeses == 16 & d_dia_talla > 0.066667) |
-             (sexo == '1' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
-             (sexo == '1' & p_edadmeses == 18 & d_dia_talla > 0.065) |
-             (sexo == '1' & p_edadmeses == 19 & d_dia_talla > 0.065) |
-             (sexo == '1' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
-             (sexo == '1' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
-             (sexo == '1' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
-             (sexo == '1' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
-             (sexo == '1' & p_edadmeses >= 24 & d_dia_talla > 0.061667) |
-             (sexo == '2' & p_edadmeses <= 2 & d_dia_talla > 0.175) |
-             (sexo == '2' & p_edadmeses == 3 & d_dia_talla > 0.143333) |
-             (sexo == '2' & p_edadmeses == 4 & d_dia_talla > 0.121667) |
-             (sexo == '2' & p_edadmeses == 5 & d_dia_talla > 0.106667) |
-             (sexo == '2' & p_edadmeses == 6 & d_dia_talla > 0.093333) |
-             (sexo == '2' & p_edadmeses == 7 & d_dia_talla > 0.085) |
-             (sexo == '2' & p_edadmeses == 8 & d_dia_talla > 0.081667) |
-             (sexo == '2' & p_edadmeses == 9 & d_dia_talla > 0.08) |
-             (sexo == '2' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
-             (sexo == '2' & p_edadmeses == 11 & d_dia_talla > 0.075) |
-             (sexo == '2' & p_edadmeses == 12 & d_dia_talla > 0.071667) |
-             (sexo == '2' & p_edadmeses == 13 & d_dia_talla > 0.07) |
-             (sexo == '2' & p_edadmeses == 14 & d_dia_talla > 0.07) |
-             (sexo == '2' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
-             (sexo == '2' & p_edadmeses == 16 & d_dia_talla > 0.068333) |
-             (sexo == '2' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
-             (sexo == '2' & p_edadmeses == 18 & d_dia_talla > 0.066667) |
-             (sexo == '2' & p_edadmeses == 19 & d_dia_talla > 0.065) |
-             (sexo == '2' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
-             (sexo == '2' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
-             (sexo == '2' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
-             (sexo == '2' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
-             (sexo == '2' & p_edadmeses >= 24 & d_dia_talla > 0.06) ~ 1,
-           TRUE ~ 0))
-
-r2_ok %>% 
-  summarise(desag = "Nacional",
-            nn = n(),
-            flg_positivo = sum(flg_delta_talla_positivo),
-            pct_posi = flg_positivo/nn,
-            flg_negativo = sum(flg_delta_talla_negativo),
-            pct_nega = flg_negativo/nn) %>% 
-  bind_rows(r2_ok %>% 
-              mutate(sexo = ifelse(sexo == "1", "Hombres", "Mujeres")) %>% 
-              group_by(sexo) %>% 
-              summarise(nn = n(),
-                        flg_positivo = sum(flg_delta_talla_positivo),
-                        pct_posi = flg_positivo/nn,
-                        flg_negativo = sum(flg_delta_talla_negativo),
-                        pct_nega = flg_negativo/nn) %>% 
-              ungroup() %>% 
-              rename(desag = sexo),
-            r2_ok %>% 
-              mutate(prov = as.numeric(prov)) %>%
-              arrange(prov) %>%
-              left_join(dpa, by = "prov") %>% 
-              group_by(DPA_DESPRO) %>% 
-              summarise(nn = n(),
-                        flg_positivo = sum(flg_delta_talla_positivo),
-                        pct_posi = flg_positivo/nn,
-                        flg_negativo = sum(flg_delta_talla_negativo),
-                        pct_nega = flg_negativo/nn) %>% 
-              ungroup() %>% 
-              rename(desag = DPA_DESPRO)) %>% 
-  mutate(across(.cols = c(pct_posi, pct_nega),
-                .fns = ~scales::percent(.x, accuracy = 0.01)),
-         across(.cols = c(nn, flg_positivo, flg_negativo),
-                .fns = ~format(.x, big.mark   = ","))) %>% 
-  kable(col.names = c("Desagregación", "Nro. de niños", "Total de banderas positivas", "Porcentaje de banderas positivas", 
-                      "Total de banderas negativas", "Porcentaje de banderas negativas"),
-        align = c("lrrcrc")) %>% 
-  pack_rows("Sexo", 2, 3) %>%
-  pack_rows("Provincia", 4, 26) %>% 
-  kable_classic()
-
-```
-
-Ronda 3
-```{r velocidad crecimiento r3, echo=FALSE}
-
-r3_ok <- r3 %>%
-  mutate(edad_diff = ifelse(edad_diff == 0, 1, edad_diff),
-         d_dia_talla = talla_diff/edad_diff, 
-         sexo2 = ifelse(sexo == "Hombres", "1", "2")) %>% 
-  filter(levantamiento == "endi" & edad_diff <=30) %>% 
-  mutate(flg_delta_talla_negativo = case_when(d_dia_talla < 0 ~ 1,
-                                              T ~ 0),
-  flg_delta_talla_positivo = case_when(
-           (sexo2 == '1' & p_edadmeses <= 2 & d_dia_talla > 0.185) |
-             (sexo2 == '1' & p_edadmeses == 3 & d_dia_talla > 0.155) |
-             (sexo2 == '1' & p_edadmeses == 4 & d_dia_talla > 0.13) |
-             (sexo2 == '1' & p_edadmeses == 5 & d_dia_talla > 0.111667) |
-             (sexo2 == '1' & p_edadmeses == 6 & d_dia_talla > 0.098333) |
-             (sexo2 == '1' & p_edadmeses == 7 & d_dia_talla > 0.088333) |
-             (sexo2 == '1' & p_edadmeses == 8 & d_dia_talla > 0.083333) |
-             (sexo2 == '1' & p_edadmeses == 9 & d_dia_talla > 0.08) |
-             (sexo2 == '1' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
-             (sexo2 == '1' & p_edadmeses == 11 & d_dia_talla > 0.075) |
-             (sexo2 == '1' & p_edadmeses == 12 & d_dia_talla > 0.073333) |
-             (sexo2 == '1' & p_edadmeses == 13 & d_dia_talla > 0.071667) |
-             (sexo2 == '1' & p_edadmeses == 14 & d_dia_talla > 0.07) |
-             (sexo2 == '1' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
-             (sexo2 == '1' & p_edadmeses == 16 & d_dia_talla > 0.066667) |
-             (sexo2 == '1' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
-             (sexo2 == '1' & p_edadmeses == 18 & d_dia_talla > 0.065) |
-             (sexo2 == '1' & p_edadmeses == 19 & d_dia_talla > 0.065) |
-             (sexo2 == '1' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
-             (sexo2 == '1' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
-             (sexo2 == '1' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
-             (sexo2 == '1' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
-             (sexo2 == '1' & p_edadmeses >= 24 & d_dia_talla > 0.061667) |
-             (sexo2 == '2' & p_edadmeses <= 2 & d_dia_talla > 0.175) |
-             (sexo2 == '2' & p_edadmeses == 3 & d_dia_talla > 0.143333) |
-             (sexo2 == '2' & p_edadmeses == 4 & d_dia_talla > 0.121667) |
-             (sexo2 == '2' & p_edadmeses == 5 & d_dia_talla > 0.106667) |
-             (sexo2 == '2' & p_edadmeses == 6 & d_dia_talla > 0.093333) |
-             (sexo2 == '2' & p_edadmeses == 7 & d_dia_talla > 0.085) |
-             (sexo2 == '2' & p_edadmeses == 8 & d_dia_talla > 0.081667) |
-             (sexo2 == '2' & p_edadmeses == 9 & d_dia_talla > 0.08) |
-             (sexo2 == '2' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
-             (sexo2 == '2' & p_edadmeses == 11 & d_dia_talla > 0.075) |
-             (sexo2 == '2' & p_edadmeses == 12 & d_dia_talla > 0.071667) |
-             (sexo2 == '2' & p_edadmeses == 13 & d_dia_talla > 0.07) |
-             (sexo2 == '2' & p_edadmeses == 14 & d_dia_talla > 0.07) |
-             (sexo2 == '2' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
-             (sexo2 == '2' & p_edadmeses == 16 & d_dia_talla > 0.068333) |
-             (sexo2 == '2' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
-             (sexo2 == '2' & p_edadmeses == 18 & d_dia_talla > 0.066667) |
-             (sexo2 == '2' & p_edadmeses == 19 & d_dia_talla > 0.065) |
-             (sexo2 == '2' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
-             (sexo2 == '2' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
-             (sexo2 == '2' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
-             (sexo2 == '2' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
-             (sexo2 == '2' & p_edadmeses >= 24 & d_dia_talla > 0.06) ~ 1,
-           TRUE ~ 0))
-
-r3_ok %>% 
-  summarise(desag = "Nacional",
-            nn = n(),
-            flg_positivo = sum(flg_delta_talla_positivo),
-            pct_posi = flg_positivo/nn,
-            flg_negativo = sum(flg_delta_talla_negativo),
-            pct_nega = flg_negativo/nn) %>% 
-  bind_rows(r3_ok %>% 
-              group_by(sexo) %>% 
-              summarise(nn = n(),
-                        flg_positivo = sum(flg_delta_talla_positivo),
-                        pct_posi = flg_positivo/nn,
-                        flg_negativo = sum(flg_delta_talla_negativo),
-                        pct_nega = flg_negativo/nn) %>% 
-              ungroup() %>% 
-              rename(desag = sexo),
-            r3_ok %>% 
-              mutate(prov = as.numeric(prov)) %>%
-              arrange(prov) %>%
-              left_join(dpa, by = "prov") %>% 
-              group_by(DPA_DESPRO) %>% 
-              summarise(nn = n(),
-                        flg_positivo = sum(flg_delta_talla_positivo),
-                        pct_posi = flg_positivo/nn,
-                        flg_negativo = sum(flg_delta_talla_negativo),
-                        pct_nega = flg_negativo/nn) %>% 
-              ungroup() %>% 
-              rename(desag = DPA_DESPRO)) %>% 
-  mutate(across(.cols = c(pct_posi, pct_nega),
-                .fns = ~scales::percent(.x, accuracy = 0.01)),
-         across(.cols = c(nn, flg_positivo, flg_negativo),
-                .fns = ~format(.x, big.mark   = ","))) %>% 
-  kable(col.names = c("Desagregación", "Nro. de niños", "Total de banderas positivas", "Porcentaje de banderas positivas", 
-                      "Total de banderas negativas", "Porcentaje de banderas negativas"),
-        align = c("lrrcrc")) %>% 
-  pack_rows("Sexo", 2, 3) %>%
-  pack_rows("Provincia", 4, 26) %>% 
-  kable_classic()
-
-```
-
-## Estadísticos descriptivos
-
-Ronda 2
-
-```{r est r2, echo=FALSE}
-
-tbl <- r2_ok %>% 
-  filter(edad_diff <= 30 & levantamiento == "endi" &
-           flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0) %>% 
-  mutate(grupo_edad = case_when(edaddias < 183 ~ "<6 meses",
-                                edaddias < 365 ~ "6-11 meses",
-                                edaddias < 731 ~ "12-23 meses",
-                                edaddias < 1096 ~ "24-35 meses",
-                                edaddias < 1461 ~ "36-47 meses",
-                                edaddias < 1826 ~ "48-59 meses"),
-         grupo_edad = factor(grupo_edad, levels = c("<6 meses", "6-11 meses", "12-23 meses",
-                                                       "24-35 meses", "36-47 meses", "48-59 meses")),
-         hombre = case_when(sexo == 1 ~ 1, T ~ 0)) %>% 
-  group_by(grupo_edad) %>% 
-  summarize(nn = n(),
-            hombres = sum(hombre),
-            mujeres = nn-hombres, 
-            dci = sum(dcronica)/nn,
-            mean_edad_diff = mean(edad_diff),
-            sd_edad_diff = sd(edad_diff),
-            mean_talla_diff = mean(d_dia_talla),
-            sd_talla_diff = sd(d_dia_talla)) %>% 
-  ungroup()
-
-tbl %>% 
-  mutate(dci = scales::percent(dci, accuracy = 0.01), 
-         across(.cols = c(grupo_edad, nn, hombres, mujeres),
-                .fns = ~format(.x, big.mark = ","))) %>% 
-  kable(col.names = c("Grupo de edad", "Nro. de niños", "Hombres", "Mujeres", "DCI", 
-                      "Promedio de diferencia de edad", "Desviación estándar de diferencia de edad",
-                      "Promedio de diferencia en cm/día", "Desviación estándar de diferencia en cm/día"),
-        align = c("lrrrccccc"),
-        digits = 2) %>% 
-  kable_classic()
-
-```
-
-Ronda 3
-
-```{r est r3, echo=FALSE}
-
-tbl <- r3_ok %>% 
-  filter(edad_diff <= 30 & levantamiento == "endi" &
-           flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0) %>% 
-  mutate(grupo_edad = case_when(edad < 183 ~ "<6 meses",
-                                edad < 365 ~ "6-11 meses",
-                                edad < 731 ~ "12-23 meses",
-                                edad < 1096 ~ "24-35 meses",
-                                edad < 1461 ~ "36-47 meses",
-                                edad < 1826 ~ "48-59 meses"),
-         grupo_edad = factor(grupo_edad, levels = c("<6 meses", "6-11 meses", "12-23 meses",
-                                                       "24-35 meses", "36-47 meses", "48-59 meses")),
-         hombre = case_when(sexo == "Hombres" ~ 1, T ~ 0)) %>% 
-  group_by(grupo_edad) %>% 
-  summarize(nn = n(),
-            hombres = sum(hombre),
-            mujeres = nn-hombres, 
-            dci = sum(dcronica)/nn,
-            mean_edad_diff = mean(edad_diff),
-            sd_edad_diff = sd(edad_diff),
-            mean_talla_diff = mean(d_dia_talla),
-            sd_talla_diff = sd(d_dia_talla)) %>% 
-  ungroup()
-
-tbl %>% 
-  mutate(dci = scales::percent(dci, accuracy = 0.01), 
-         across(.cols = c(grupo_edad, nn, hombres, mujeres),
-                .fns = ~format(.x, big.mark = ","))) %>% 
-  kable(col.names = c("Grupo de edad", "Nro. de niños", "Hombres", "Mujeres", "DCI", 
-                      "Promedio de diferencia de edad", "Desviación estándar de diferencia de edad",
-                      "Promedio de diferencia en cm/día", "Desviación estándar de diferencia en cm/día"),
-        align = c("llllccccc"),
-        digits = 2) %>% 
-  kable_classic()
-
-```
-
-**Correlación**
-
-```{r, include=FALSE}
-#r3
-r2_wide <- r2 %>% 
-  select(id_per, levantamiento, talla) %>% 
-  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(control))
-
-cor_r2 <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
-
-r2_wide <- r2 %>% 
-  filter(id_per %in% (r2_ok %>% pull(id_per))) %>% 
-  select(id_per, levantamiento, talla) %>% 
-  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(control))
-
-cor_r2_ok <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
-
-#r3
-
-r3_wide <- r3 %>%
-  arrange(desc(edad)) %>% 
-  distinct(id_per, levantamiento, .keep_all = T) %>% 
-  select(id_per, levantamiento, talla) %>% 
-  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(controlMSP))
-
-cor_r3 <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
-
-r3_wide <- r3 %>%
-  arrange(desc(edad)) %>% 
-  distinct(id_per, levantamiento, .keep_all = T) %>% 
-  filter(id_per %in% (r3_ok %>% pull(id_per))) %>% 
-  select(id_per, levantamiento, talla) %>% 
-  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(controlMSP))
-
-cor_r3_ok <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
-
-```
-
-En Ronda 2, sin eliminar los valores implausibles por velocidad de crecimiento existe una correlacion de `r cor_r2` entre la última medición de control de Niño Sano y la medición ENDI. Eliminando los valores implausibles la correlación sube a `r cor_r2_ok`. Para Ronda 3, sin eliminar valores implausibles la correlación existe una correlación de `r cor_r3`. Eliminando los valores implausibles la correlación sube a `r cor_r3_ok`.
-
-## Velocidad de crecimiento
 
 ```{r gen_flags, include=FALSE}
 
@@ -497,7 +161,9 @@ prop_rangos_all <- prop_rangos_all[, .(d_dia_talla_cat, Numero_R2, Numero_R3, Po
 
 ```
 
-## Identificar mediciones ENDI MSP consistentes
+# Inconsistencia por velocidad de crecimiento
+
+Para el análisis nos quedamos únicamente con las mediciones que tengan una diferencia máxima de hasta 30 días entre el último control de Niño Sano en MSP y la medición de talla/longitud de la ENDI.
 
 ```{r}
 colnames(prop_rangos_all) <- c("Categoría", "Ronda 1", "Ronda 2", "Ronda 1", "Ronda 2")
@@ -511,8 +177,324 @@ knitr::kable(prop_rangos_all, format = "html", align = "c", caption = "Distribuc
 
 ```
 
+# Inconsistencias por sexo y provincia-Ronda 2
 
-## Densidad de crecimiento promedio por dia (solo casos cuya velocidad de crecimiento se encuentra dentro del rango aceptable)
+```{r velocidad crecimiento r2, echo=FALSE}
+
+dpa <- read.xlsx("../cod_dpa.xlsx",
+                 sheet = "prov") %>% 
+  mutate(DPA_PROVIN = as.numeric(DPA_PROVIN)) %>% 
+  rename(prov = DPA_PROVIN)
+
+r2_ok <- r2 %>%
+  filter(levantamiento == "endi" & edad_diff <=30) %>% 
+  mutate(flg_delta_talla_negativo = case_when(d_dia_talla < 0 ~ 1,
+                                              T ~ 0),
+  flg_delta_talla_positivo = case_when(
+           (sexo == '1' & p_edadmeses <= 2 & d_dia_talla > 0.185) |
+             (sexo == '1' & p_edadmeses == 3 & d_dia_talla > 0.155) |
+             (sexo == '1' & p_edadmeses == 4 & d_dia_talla > 0.13) |
+             (sexo == '1' & p_edadmeses == 5 & d_dia_talla > 0.111667) |
+             (sexo == '1' & p_edadmeses == 6 & d_dia_talla > 0.098333) |
+             (sexo == '1' & p_edadmeses == 7 & d_dia_talla > 0.088333) |
+             (sexo == '1' & p_edadmeses == 8 & d_dia_talla > 0.083333) |
+             (sexo == '1' & p_edadmeses == 9 & d_dia_talla > 0.08) |
+             (sexo == '1' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
+             (sexo == '1' & p_edadmeses == 11 & d_dia_talla > 0.075) |
+             (sexo == '1' & p_edadmeses == 12 & d_dia_talla > 0.073333) |
+             (sexo == '1' & p_edadmeses == 13 & d_dia_talla > 0.071667) |
+             (sexo == '1' & p_edadmeses == 14 & d_dia_talla > 0.07) |
+             (sexo == '1' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
+             (sexo == '1' & p_edadmeses == 16 & d_dia_talla > 0.066667) |
+             (sexo == '1' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
+             (sexo == '1' & p_edadmeses == 18 & d_dia_talla > 0.065) |
+             (sexo == '1' & p_edadmeses == 19 & d_dia_talla > 0.065) |
+             (sexo == '1' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
+             (sexo == '1' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
+             (sexo == '1' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
+             (sexo == '1' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
+             (sexo == '1' & p_edadmeses >= 24 & d_dia_talla > 0.061667) |
+             (sexo == '2' & p_edadmeses <= 2 & d_dia_talla > 0.175) |
+             (sexo == '2' & p_edadmeses == 3 & d_dia_talla > 0.143333) |
+             (sexo == '2' & p_edadmeses == 4 & d_dia_talla > 0.121667) |
+             (sexo == '2' & p_edadmeses == 5 & d_dia_talla > 0.106667) |
+             (sexo == '2' & p_edadmeses == 6 & d_dia_talla > 0.093333) |
+             (sexo == '2' & p_edadmeses == 7 & d_dia_talla > 0.085) |
+             (sexo == '2' & p_edadmeses == 8 & d_dia_talla > 0.081667) |
+             (sexo == '2' & p_edadmeses == 9 & d_dia_talla > 0.08) |
+             (sexo == '2' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
+             (sexo == '2' & p_edadmeses == 11 & d_dia_talla > 0.075) |
+             (sexo == '2' & p_edadmeses == 12 & d_dia_talla > 0.071667) |
+             (sexo == '2' & p_edadmeses == 13 & d_dia_talla > 0.07) |
+             (sexo == '2' & p_edadmeses == 14 & d_dia_talla > 0.07) |
+             (sexo == '2' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
+             (sexo == '2' & p_edadmeses == 16 & d_dia_talla > 0.068333) |
+             (sexo == '2' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
+             (sexo == '2' & p_edadmeses == 18 & d_dia_talla > 0.066667) |
+             (sexo == '2' & p_edadmeses == 19 & d_dia_talla > 0.065) |
+             (sexo == '2' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
+             (sexo == '2' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
+             (sexo == '2' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
+             (sexo == '2' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
+             (sexo == '2' & p_edadmeses >= 24 & d_dia_talla > 0.06) ~ 1,
+           TRUE ~ 0))
+
+r2_ok %>% 
+              mutate(sexo = ifelse(sexo == "1", "Hombres", "Mujeres")) %>% 
+              group_by(sexo) %>% 
+              summarise(nn = n(),
+                        flg_positivo = sum(flg_delta_talla_positivo),
+                        pct_posi = flg_positivo/nn,
+                        flg_negativo = sum(flg_delta_talla_negativo),
+                        pct_nega = flg_negativo/nn) %>% 
+              ungroup() %>% 
+              rename(desag = sexo) %>% 
+  bind_rows(
+            r2_ok %>% 
+              mutate(prov = as.numeric(prov)) %>%
+              arrange(prov) %>%
+              left_join(dpa, by = "prov") %>% 
+              group_by(DPA_DESPRO) %>% 
+              summarise(nn = n(),
+                        flg_positivo = sum(flg_delta_talla_positivo),
+                        pct_posi = flg_positivo/nn,
+                        flg_negativo = sum(flg_delta_talla_negativo),
+                        pct_nega = flg_negativo/nn) %>% 
+              ungroup() %>% 
+              rename(desag = DPA_DESPRO)) %>% 
+  mutate(across(.cols = c(pct_posi, pct_nega),
+                .fns = ~scales::percent(.x, accuracy = 0.01)),
+         across(.cols = c(nn, flg_positivo, flg_negativo),
+                .fns = ~format(.x, big.mark   = ","))) %>% 
+  kable(col.names = c("Desagregación", "Nro. de niños", "Total de banderas positivas", "Porcentaje de banderas positivas", 
+                      "Total de banderas negativas", "Porcentaje de banderas negativas"),
+        align = c("lrrcrc")) %>% 
+  # pack_rows("Sexo", 2, 3) %>%
+  # pack_rows("Provincia", 4, 26) %>% 
+  kable_classic()
+
+```
+
+
+# Inconsistencias por sexo y provincia-Ronda 3
+
+```{r velocidad crecimiento r3, echo=FALSE}
+
+r3_ok <- r3 %>%
+  mutate(edad_diff = ifelse(edad_diff == 0, 1, edad_diff),
+         d_dia_talla = talla_diff/edad_diff, 
+         sexo2 = ifelse(sexo == "Hombres", "1", "2")) %>% 
+  filter(levantamiento == "endi" & edad_diff <=30) %>% 
+  mutate(flg_delta_talla_negativo = case_when(d_dia_talla < 0 ~ 1,
+                                              T ~ 0),
+  flg_delta_talla_positivo = case_when(
+           (sexo2 == '1' & p_edadmeses <= 2 & d_dia_talla > 0.185) |
+             (sexo2 == '1' & p_edadmeses == 3 & d_dia_talla > 0.155) |
+             (sexo2 == '1' & p_edadmeses == 4 & d_dia_talla > 0.13) |
+             (sexo2 == '1' & p_edadmeses == 5 & d_dia_talla > 0.111667) |
+             (sexo2 == '1' & p_edadmeses == 6 & d_dia_talla > 0.098333) |
+             (sexo2 == '1' & p_edadmeses == 7 & d_dia_talla > 0.088333) |
+             (sexo2 == '1' & p_edadmeses == 8 & d_dia_talla > 0.083333) |
+             (sexo2 == '1' & p_edadmeses == 9 & d_dia_talla > 0.08) |
+             (sexo2 == '1' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
+             (sexo2 == '1' & p_edadmeses == 11 & d_dia_talla > 0.075) |
+             (sexo2 == '1' & p_edadmeses == 12 & d_dia_talla > 0.073333) |
+             (sexo2 == '1' & p_edadmeses == 13 & d_dia_talla > 0.071667) |
+             (sexo2 == '1' & p_edadmeses == 14 & d_dia_talla > 0.07) |
+             (sexo2 == '1' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
+             (sexo2 == '1' & p_edadmeses == 16 & d_dia_talla > 0.066667) |
+             (sexo2 == '1' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
+             (sexo2 == '1' & p_edadmeses == 18 & d_dia_talla > 0.065) |
+             (sexo2 == '1' & p_edadmeses == 19 & d_dia_talla > 0.065) |
+             (sexo2 == '1' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
+             (sexo2 == '1' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
+             (sexo2 == '1' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
+             (sexo2 == '1' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
+             (sexo2 == '1' & p_edadmeses >= 24 & d_dia_talla > 0.061667) |
+             (sexo2 == '2' & p_edadmeses <= 2 & d_dia_talla > 0.175) |
+             (sexo2 == '2' & p_edadmeses == 3 & d_dia_talla > 0.143333) |
+             (sexo2 == '2' & p_edadmeses == 4 & d_dia_talla > 0.121667) |
+             (sexo2 == '2' & p_edadmeses == 5 & d_dia_talla > 0.106667) |
+             (sexo2 == '2' & p_edadmeses == 6 & d_dia_talla > 0.093333) |
+             (sexo2 == '2' & p_edadmeses == 7 & d_dia_talla > 0.085) |
+             (sexo2 == '2' & p_edadmeses == 8 & d_dia_talla > 0.081667) |
+             (sexo2 == '2' & p_edadmeses == 9 & d_dia_talla > 0.08) |
+             (sexo2 == '2' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
+             (sexo2 == '2' & p_edadmeses == 11 & d_dia_talla > 0.075) |
+             (sexo2 == '2' & p_edadmeses == 12 & d_dia_talla > 0.071667) |
+             (sexo2 == '2' & p_edadmeses == 13 & d_dia_talla > 0.07) |
+             (sexo2 == '2' & p_edadmeses == 14 & d_dia_talla > 0.07) |
+             (sexo2 == '2' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
+             (sexo2 == '2' & p_edadmeses == 16 & d_dia_talla > 0.068333) |
+             (sexo2 == '2' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
+             (sexo2 == '2' & p_edadmeses == 18 & d_dia_talla > 0.066667) |
+             (sexo2 == '2' & p_edadmeses == 19 & d_dia_talla > 0.065) |
+             (sexo2 == '2' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
+             (sexo2 == '2' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
+             (sexo2 == '2' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
+             (sexo2 == '2' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
+             (sexo2 == '2' & p_edadmeses >= 24 & d_dia_talla > 0.06) ~ 1,
+           TRUE ~ 0))
+
+r3_ok %>% 
+              group_by(sexo) %>% 
+              summarise(nn = n(),
+                        flg_positivo = sum(flg_delta_talla_positivo),
+                        pct_posi = flg_positivo/nn,
+                        flg_negativo = sum(flg_delta_talla_negativo),
+                        pct_nega = flg_negativo/nn) %>% 
+              ungroup() %>% 
+              rename(desag = sexo) %>% 
+  bind_rows(
+            r3_ok %>% 
+              mutate(prov = as.numeric(prov)) %>%
+              arrange(prov) %>%
+              left_join(dpa, by = "prov") %>% 
+              group_by(DPA_DESPRO) %>% 
+              summarise(nn = n(),
+                        flg_positivo = sum(flg_delta_talla_positivo),
+                        pct_posi = flg_positivo/nn,
+                        flg_negativo = sum(flg_delta_talla_negativo),
+                        pct_nega = flg_negativo/nn) %>% 
+              ungroup() %>% 
+              rename(desag = DPA_DESPRO)) %>% 
+  mutate(across(.cols = c(pct_posi, pct_nega),
+                .fns = ~scales::percent(.x, accuracy = 0.01)),
+         across(.cols = c(nn, flg_positivo, flg_negativo),
+                .fns = ~format(.x, big.mark   = ","))) %>% 
+  kable(col.names = c("Desagregación", "Nro. de niños", "Total de banderas positivas", "Porcentaje de banderas positivas", 
+                      "Total de banderas negativas", "Porcentaje de banderas negativas"),
+        align = c("lrrcrc")) %>% 
+  # pack_rows("Sexo", 2, 3) %>%
+  # pack_rows("Provincia", 4, 26) %>% 
+  kable_classic()
+
+```
+
+# Correlación
+
+```{r, include=FALSE}
+#r3
+r2_wide <- r2 %>% 
+  select(id_per, levantamiento, talla) %>% 
+  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
+  filter(!is.na(endi) & !is.na(control))
+
+cor_r2 <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
+
+r2_wide <- r2 %>% 
+  filter(id_per %in% (r2_ok %>% pull(id_per))) %>% 
+  select(id_per, levantamiento, talla) %>% 
+  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
+  filter(!is.na(endi) & !is.na(control))
+
+cor_r2_ok <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
+
+#r3
+
+r3_wide <- r3 %>%
+  arrange(desc(edad)) %>% 
+  distinct(id_per, levantamiento, .keep_all = T) %>% 
+  select(id_per, levantamiento, talla) %>% 
+  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
+  filter(!is.na(endi) & !is.na(controlMSP))
+
+cor_r3 <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
+
+r3_wide <- r3 %>%
+  arrange(desc(edad)) %>% 
+  distinct(id_per, levantamiento, .keep_all = T) %>% 
+  filter(id_per %in% (r3_ok %>% pull(id_per))) %>% 
+  select(id_per, levantamiento, talla) %>% 
+  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
+  filter(!is.na(endi) & !is.na(controlMSP))
+
+cor_r3_ok <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
+
+```
+
+En Ronda 2, sin eliminar los valores implausibles por velocidad de crecimiento existe una correlacion de `r cor_r2` entre la última medición de control de Niño Sano y la medición ENDI. Eliminando los valores implausibles la correlación sube a `r cor_r2_ok`. Para Ronda 3, sin eliminar valores implausibles la correlación existe una correlación de `r cor_r3`. Eliminando los valores implausibles la correlación sube a `r cor_r3_ok`.
+
+
+```{r est r2, include=FALSE}
+
+tbl <- r2_ok %>% 
+  filter(edad_diff <= 30 & levantamiento == "endi" &
+           flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0) %>% 
+  mutate(grupo_edad = case_when(edaddias < 183 ~ "<6 meses",
+                                edaddias < 365 ~ "6-11 meses",
+                                edaddias < 731 ~ "12-23 meses",
+                                edaddias < 1096 ~ "24-35 meses",
+                                edaddias < 1461 ~ "36-47 meses",
+                                edaddias < 1826 ~ "48-59 meses"),
+         grupo_edad = factor(grupo_edad, levels = c("<6 meses", "6-11 meses", "12-23 meses",
+                                                       "24-35 meses", "36-47 meses", "48-59 meses")),
+         hombre = case_when(sexo == 1 ~ 1, T ~ 0)) %>% 
+  group_by(grupo_edad) %>% 
+  summarize(nn = n(),
+            hombres = sum(hombre),
+            mujeres = nn-hombres, 
+            dci = sum(dcronica)/nn,
+            mean_edad_diff = mean(edad_diff),
+            sd_edad_diff = sd(edad_diff),
+            mean_talla_diff = mean(d_dia_talla),
+            sd_talla_diff = sd(d_dia_talla)) %>% 
+  ungroup()
+
+tbl %>% 
+  mutate(dci = scales::percent(dci, accuracy = 0.01), 
+         across(.cols = c(grupo_edad, nn, hombres, mujeres),
+                .fns = ~format(.x, big.mark = ","))) %>% 
+  kable(col.names = c("Grupo de edad", "Nro. de niños", "Hombres", "Mujeres", "DCI", 
+                      "Promedio de diferencia de edad", "Desviación estándar de diferencia de edad",
+                      "Promedio de diferencia en cm/día", "Desviación estándar de diferencia en cm/día"),
+        align = c("lrrrccccc"),
+        digits = 2) %>% 
+  kable_classic()
+
+```
+
+
+
+```{r est r3, include=FALSE}
+
+tbl <- r3_ok %>% 
+  filter(edad_diff <= 30 & levantamiento == "endi" &
+           flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0) %>% 
+  mutate(grupo_edad = case_when(edad < 183 ~ "<6 meses",
+                                edad < 365 ~ "6-11 meses",
+                                edad < 731 ~ "12-23 meses",
+                                edad < 1096 ~ "24-35 meses",
+                                edad < 1461 ~ "36-47 meses",
+                                edad < 1826 ~ "48-59 meses"),
+         grupo_edad = factor(grupo_edad, levels = c("<6 meses", "6-11 meses", "12-23 meses",
+                                                       "24-35 meses", "36-47 meses", "48-59 meses")),
+         hombre = case_when(sexo == "Hombres" ~ 1, T ~ 0)) %>% 
+  group_by(grupo_edad) %>% 
+  summarize(nn = n(),
+            hombres = sum(hombre),
+            mujeres = nn-hombres, 
+            dci = sum(dcronica)/nn,
+            mean_edad_diff = mean(edad_diff),
+            sd_edad_diff = sd(edad_diff),
+            mean_talla_diff = mean(d_dia_talla),
+            sd_talla_diff = sd(d_dia_talla)) %>% 
+  ungroup()
+
+tbl %>% 
+  mutate(dci = scales::percent(dci, accuracy = 0.01), 
+         across(.cols = c(grupo_edad, nn, hombres, mujeres),
+                .fns = ~format(.x, big.mark = ","))) %>% 
+  kable(col.names = c("Grupo de edad", "Nro. de niños", "Hombres", "Mujeres", "DCI", 
+                      "Promedio de diferencia de edad", "Desviación estándar de diferencia de edad",
+                      "Promedio de diferencia en cm/día", "Desviación estándar de diferencia en cm/día"),
+        align = c("llllccccc"),
+        digits = 2) %>% 
+  kable_classic()
+
+```
+
+## Estadisticos descriptivos del crecimiento promedio por día 
 
 ```{r, include=FALSE}
 
@@ -541,6 +523,61 @@ R3_filt <- R3_filt %>%
       TRUE ~ NA_character_ 
     ))
 
+
+descriptivosR2 <- R2_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado"), .(
+  N = .N,
+  Media = mean(d_dia_talla, na.rm = TRUE),
+  Desv_Est = sd(d_dia_talla, na.rm = TRUE),
+  Mediana = median(d_dia_talla, na.rm = TRUE),
+  Minimo = min(d_dia_talla, na.rm = TRUE),
+  Maximo = max(d_dia_talla, na.rm = TRUE),
+  Ronda="R2"
+), by=.(gedad)]
+
+descriptivosR3 <- R3_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado"), .(
+  N = .N,
+  Media = mean(d_dia_talla, na.rm = TRUE),
+  Desv_Est = sd(d_dia_talla, na.rm = TRUE),
+  Mediana = median(d_dia_talla, na.rm = TRUE),
+  Minimo = min(d_dia_talla, na.rm = TRUE),
+  Maximo = max(d_dia_talla, na.rm = TRUE),
+  Ronda="R3"
+), by=.(gedad)]
+
+descriptivos_all <- rbind(descriptivosR2, descriptivosR3)
+
+descriptivos_all2 <- dcast(descriptivos_all, gedad ~ Ronda, value.var = c("N", "Media", "Desv_Est", "Mediana", "Minimo", "Maximo"))
+
+descriptivos_all2 <- descriptivos_all2[, gedad:=factor(gedad, levels = c("<6m", "6m - <1a", "1a - <2a", "2a - <3a", "3a - <4a", "4a - <5a"))][order(gedad)][, .(gedad, N_R2, N_R3, Media_R2, Media_R3, Desv_Est_R2, Desv_Est_R3, Mediana_R2, Mediana_R3, Maximo_R2, Maximo_R3)]
+
+```
+
+
+```{r}
+
+colnames(descriptivos_all2) <- c("Grupo Edad", 
+                        "Ronda 2", "Ronda 3", 
+                        "Ronda 2", "Ronda 3", 
+                       "Ronda 2", "Ronda 3", 
+                        "Ronda 2", "Ronda 3", 
+                        "Ronda 2", "Ronda 3")
+
+# 3. Generar la tabla con formato avanzado
+descriptivos_all2 %>%
+  kable(format = "html", digits = 3, align = "c", caption = "Resumen Estadístico por Grupo de Edad (R2 vs R3)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, 
+                     "Tamaño Muestra (N)" = 2, 
+                     "Media" = 2, 
+                     "Desv. Estándar" = 2, 
+                     "Mediana" = 2, 
+                     "Máximo" = 2)) 
+
+```
+
+
+```{r, include=FALSE}
 ### graficos
 
 R2_filt[, peso:=NULL]
@@ -572,15 +609,6 @@ men2 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad 
  
 ```
 
-Niños/as menores de 5 y menores de 2 años 
-
-```{r}
-men5 | men2
-
-```
-
-
-## Niños/as por grupos de edad 
 
 ```{r, include=FALSE}
 
@@ -642,62 +670,17 @@ g6 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de
 
 ```
 
+# Niños de 6 meses a menos de un año
+
 ```{r}
-(g1 | g2)/(g3|g4)/(g5|g6)
+(g1 | g2)
 ```
 
-## Estadisticos descriptivos del crecimiento promedio por día 
-
-```{r, include=FALSE}
-
-descriptivosR2 <- R2_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado"), .(
-  N = .N,
-  Media = mean(d_dia_talla, na.rm = TRUE),
-  Desv_Est = sd(d_dia_talla, na.rm = TRUE),
-  Mediana = median(d_dia_talla, na.rm = TRUE),
-  Minimo = min(d_dia_talla, na.rm = TRUE),
-  Maximo = max(d_dia_talla, na.rm = TRUE),
-  Ronda="R2"
-), by=.(gedad)]
-
-descriptivosR3 <- R3_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado"), .(
-  N = .N,
-  Media = mean(d_dia_talla, na.rm = TRUE),
-  Desv_Est = sd(d_dia_talla, na.rm = TRUE),
-  Mediana = median(d_dia_talla, na.rm = TRUE),
-  Minimo = min(d_dia_talla, na.rm = TRUE),
-  Maximo = max(d_dia_talla, na.rm = TRUE),
-  Ronda="R3"
-), by=.(gedad)]
-
-descriptivos_all <- rbind(descriptivosR2, descriptivosR3)
-
-descriptivos_all2 <- dcast(descriptivos_all, gedad ~ Ronda, value.var = c("N", "Media", "Desv_Est", "Mediana", "Minimo", "Maximo"))
-
-descriptivos_all2 <- descriptivos_all2[, gedad:=factor(gedad, levels = c("<6m", "6m - <1a", "1a - <2a", "2a - <3a", "3a - <4a", "4a - <5a"))][order(gedad)][, .(gedad, N_R2, N_R3, Media_R2, Media_R3, Desv_Est_R2, Desv_Est_R3, Mediana_R2, Mediana_R3, Maximo_R2, Maximo_R3)]
-
-```
+# Niños de 1 a menos de 3 años
 
 
 ```{r}
-
-colnames(descriptivos_all2) <- c("Grupo Edad", 
-                        "Ronda 2", "Ronda 3", 
-                        "Ronda 2", "Ronda 3", 
-                       "Ronda 2", "Ronda 3", 
-                        "Ronda 2", "Ronda 3", 
-                        "Ronda 2", "Ronda 3")
-
-# 3. Generar la tabla con formato avanzado
-descriptivos_all2 %>%
-  kable(format = "html", digits = 3, align = "c", caption = "Resumen Estadístico por Grupo de Edad (R2 vs R3)") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
-                full_width = FALSE) %>%
-  add_header_above(c(" " = 1, 
-                     "Tamaño Muestra (N)" = 2, 
-                     "Media" = 2, 
-                     "Desv. Estándar" = 2, 
-                     "Mediana" = 2, 
-                     "Máximo" = 2)) 
+(g3|g4)
 
 ```
+

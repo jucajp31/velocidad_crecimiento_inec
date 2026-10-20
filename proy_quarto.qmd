@@ -166,7 +166,7 @@ prop_rangos_all <- prop_rangos_all[, .(d_dia_talla_cat, Numero_R2, Numero_R3, Po
 Para el análisis nos quedamos únicamente con las mediciones que tengan una diferencia máxima de hasta 30 días entre el último control de Niño Sano en MSP y la medición de talla/longitud de la ENDI.
 
 ```{r}
-colnames(prop_rangos_all) <- c("Categoría", "Ronda 1", "Ronda 2", "Ronda 1", "Ronda 2")
+colnames(prop_rangos_all) <- c("Categoría", "Ronda 2", "Ronda 3", "Ronda 2", "Ronda 3")
 
 # 4. Generar la tabla con knitr y kableExtra
 knitr::kable(prop_rangos_all, format = "html", align = "c", caption = "Distribución categorías") |>
@@ -176,6 +176,8 @@ knitr::kable(prop_rangos_all, format = "html", align = "c", caption = "Distribuc
   collapse_rows(columns = 1, valign = "middle")
 
 ```
+
+Entre R3 y R2, es menor el porcentaje de mediciones ENDI que sugieren decrecimientos respecto a la última medición disponible en la LIS, y es mayor el porcentaje de mediciones que muestran velocidades de crecimiento por encima de los umbrales considerados posibles. El porcentaje de mediciones ENDI que muestran velocidades de crecimiento dentro del rango esperado frente a la ultima medicion disponible en la LIS se mantiene estable. 
 
 # Inconsistencias por sexo y provincia-Ronda 2
 
@@ -501,6 +503,7 @@ tbl %>%
 ### construccion de grupos de edad (considerando edad en meses)
 
 setnames(R3_filt, "edad", "edaddias")
+
 R2_filt <- R2_filt %>% 
     mutate(gedad = case_when(
       edaddias < 183 ~ "<6m",
@@ -523,6 +526,25 @@ R3_filt <- R3_filt %>%
       TRUE ~ NA_character_ 
     ))
 
+## calculos dcronica
+
+R2_filt <- R2_filt %>%
+  mutate(dcronica = case_when(
+    (zlen >= -6 & zlen < -2) & (edaddias < 1826 & !is.na(edaddias)) ~ 1,
+    (zlen >= -2 & zlen <= 6) & (edaddias < 1826 & !is.na(edaddias)) ~ 0, 
+    TRUE ~ NA_real_ 
+  ))
+
+R3_filt <- R3_filt %>%
+  mutate(dcronica = case_when(
+    (zlen >= -6 & zlen < -2) & (edaddias < 1826 & !is.na(edaddias)) ~ 1,
+    (zlen >= -2 & zlen <= 6) & (edaddias < 1826 & !is.na(edaddias)) ~ 0, 
+    TRUE ~ NA_real_ 
+  ))
+
+setorder(R2_filt, id_per, edaddias)
+R2_filt[, dcronica_prev:=shift(dcronica)]
+R3_filt[, dcronica_prev:=shift(dcronica)]
 
 descriptivosR2 <- R2_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado"), .(
   N = .N,
@@ -531,6 +553,8 @@ descriptivosR2 <- R2_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Veloci
   Mediana = median(d_dia_talla, na.rm = TRUE),
   Minimo = min(d_dia_talla, na.rm = TRUE),
   Maximo = max(d_dia_talla, na.rm = TRUE),
+  dcronica_endi =mean(dcronica), 
+  dcronica_MSP =mean(dcronica_prev),
   Ronda="R2"
 ), by=.(gedad)]
 
@@ -541,21 +565,26 @@ descriptivosR3 <- R3_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Veloci
   Mediana = median(d_dia_talla, na.rm = TRUE),
   Minimo = min(d_dia_talla, na.rm = TRUE),
   Maximo = max(d_dia_talla, na.rm = TRUE),
+  dcronica_endi =mean(dcronica), 
+  dcronica_MSP =mean(dcronica_prev), 
   Ronda="R3"
 ), by=.(gedad)]
 
 descriptivos_all <- rbind(descriptivosR2, descriptivosR3)
 
-descriptivos_all2 <- dcast(descriptivos_all, gedad ~ Ronda, value.var = c("N", "Media", "Desv_Est", "Mediana", "Minimo", "Maximo"))
+descriptivos_all2 <- dcast(descriptivos_all, gedad ~ Ronda, value.var = c("N", "Media", "Desv_Est", "Mediana", "Minimo", "Maximo", "dcronica_endi", "dcronica_MSP"))
 
-descriptivos_all2 <- descriptivos_all2[, gedad:=factor(gedad, levels = c("<6m", "6m - <1a", "1a - <2a", "2a - <3a", "3a - <4a", "4a - <5a"))][order(gedad)][, .(gedad, N_R2, N_R3, Media_R2, Media_R3, Desv_Est_R2, Desv_Est_R3, Mediana_R2, Mediana_R3, Maximo_R2, Maximo_R3)]
+descriptivos_all3 <- descriptivos_all2[, gedad:=factor(gedad, levels = c("<6m", "6m - <1a", "1a - <2a", "2a - <3a", "3a - <4a", "4a - <5a"))][order(gedad)][, .(gedad, N_R2, N_R3, Media_R2, Media_R3, Desv_Est_R2, Desv_Est_R3, Mediana_R2, Mediana_R3, Maximo_R2, Maximo_R3)]
+
+descriptivos_dcronica <- descriptivos_all2[, gedad:=factor(gedad, levels = c("<6m", "6m - <1a", "1a - <2a", "2a - <3a", "3a - <4a", "4a - <5a"))][order(gedad)][, .(gedad, N_R2, N_R3, dcronica_endi_R2, dcronica_endi_R3,  dcronica_MSP_R2, dcronica_MSP_R3)]
 
 ```
 
 
+
 ```{r}
 
-colnames(descriptivos_all2) <- c("Grupo Edad", 
+colnames(descriptivos_all3) <- c("Grupo Edad", 
                         "Ronda 2", "Ronda 3", 
                         "Ronda 2", "Ronda 3", 
                        "Ronda 2", "Ronda 3", 
@@ -563,7 +592,7 @@ colnames(descriptivos_all2) <- c("Grupo Edad",
                         "Ronda 2", "Ronda 3")
 
 # 3. Generar la tabla con formato avanzado
-descriptivos_all2 %>%
+descriptivos_all3 %>%
   kable(format = "html", digits = 3, align = "c", caption = "Resumen Estadístico por Grupo de Edad (R2 vs R3)") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
                 full_width = FALSE) %>%
@@ -576,6 +605,7 @@ descriptivos_all2 %>%
 
 ```
 
+Los registros recientes de mediciones de talla registrados en la LIS corresponden principalmente a niños menores de 2 años. Considerando este grupo, se observa un aumento en el crecimiento mediano por día de 0.006cm (que corresponde a 0.18cm por mes) en niños menores de 6 meses, y de 0.002cm (0.06cm por mes) en niños de 6 meses a 1 año. 
 
 ```{r, include=FALSE}
 ### graficos
@@ -683,4 +713,41 @@ g6 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de
 (g3|g4)
 
 ```
+
+
+# Desnutrición crónica 
+
+```{r}
+
+descriptivos_dcronica[, var_endi:=(dcronica_endi_R3-dcronica_endi_R2)*100]
+descriptivos_dcronica[, var_MSP:=(dcronica_MSP_R3-dcronica_MSP_R2)*100]
+descriptivos_dcronica[, dcronica_endi_R2:=dcronica_endi_R2*100]
+descriptivos_dcronica[, dcronica_endi_R3:=dcronica_endi_R3*100]
+descriptivos_dcronica[, dcronica_MSP_R2:=dcronica_MSP_R2*100]
+descriptivos_dcronica[, dcronica_MSP_R3:=dcronica_MSP_R3*100]
+
+colnames(descriptivos_dcronica) <- c("Grupo Edad", 
+                        "Ronda 2", "Ronda 3", 
+                        "Ronda 2", "Ronda 3",
+                        "Ronda 2", "Ronda 3", 
+                        "Variación ENDI R3-R2 (pp)",
+                        "Variacion MSP R3-R2 (pp)")
+
+# 3. Generar la tabla con formato avanzado
+descriptivos_dcronica %>%
+  kable(format = "html", digits = 3, align = "c", caption = "Resumen Estadístico por Grupo de Edad (R2 vs R3)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, 
+                     "Tamaño Muestra (N)" = 2, 
+                     "Dcronica ENDI" = 2,
+                     "Dcronica MSP" = 2,
+                     " "=2)) 
+
+```
+
+En ronda 2, la prevalencia de desnutrición crónica infantil en menores de 2 años considerando las mediciones realizadas en el marco de la ENDI, se encontraba por encima de la prevalencia de DCI considerando las mediciones recientes disponibles en la LIS, principalmente en el grupo de 1 a dos años, con brechas que oscilan entre 1.5 y 3.5 puntos porcentuales. Existen diferencias menores en la prevalencia de DCI segun ambas fuentes, en la ronda 3, con diferencias que se encuentran por debajo de un punto porcentual. Entre R2 y R3, la caída más fuerte en la prevalencia de DCI se observa en el grupo de niños de 6m a <1a, en una magnitud consistente tanto segun ENDI como segun MSP (6 pp segun ENDI y 5 pp según MSP)
+
+
+
 

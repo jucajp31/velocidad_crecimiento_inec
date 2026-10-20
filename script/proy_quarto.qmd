@@ -26,17 +26,6 @@ r3 <- readRDS("../../r3.RDS")
 
 ```
 
-```{r, include=FALSE}
-# 1) Niños cuya fila endi tiene edad_diff < 30
-ids_ok <- r3[levantamiento == "endi" & edad_diff <= 30, unique(id_per)]
-
-# 2) De esos niños, última y penúltima fila
-R3_ult <- r3[id_per %in% ids_ok,
-
-
-## Consistencia de las mediciones ENDI 
-
-
 ```{r filtro_med_recientes, include=FALSE}
 
 r2 <- as.data.table(r2)
@@ -62,7 +51,7 @@ R3_filt <- filt_base(r3)
 
 ## Consistencia de las mediciones ENDI
 
-### Inconsistencia por velocidad de crecimiento
+## Inconsistencia por velocidad de crecimiento
 Para el análisis nos quedamos únicamente con las mediciones que tengan una diferencia máxima de hasta 30 días entre el último control de Niño Sano en MSP y la medición de talla/longitud de la ENDI.
 
 Ronda 2
@@ -268,9 +257,7 @@ r3_ok %>%
 
 ```
 
-### Estadísticos descriptivos
-
-Una vez eliminados los implausibles por
+## Estadísticos descriptivos
 
 Ronda 2
 
@@ -309,6 +296,95 @@ tbl %>%
         align = c("lrrrccccc"),
         digits = 2) %>% 
   kable_classic()
+
+```
+
+Ronda 3
+
+```{r est r3, echo=FALSE}
+
+tbl <- r3_ok %>% 
+  filter(edad_diff <= 30 & levantamiento == "endi" &
+           flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0) %>% 
+  mutate(grupo_edad = case_when(edad < 183 ~ "<6 meses",
+                                edad < 365 ~ "6-11 meses",
+                                edad < 731 ~ "12-23 meses",
+                                edad < 1096 ~ "24-35 meses",
+                                edad < 1461 ~ "36-47 meses",
+                                edad < 1826 ~ "48-59 meses"),
+         grupo_edad = factor(grupo_edad, levels = c("<6 meses", "6-11 meses", "12-23 meses",
+                                                       "24-35 meses", "36-47 meses", "48-59 meses")),
+         hombre = case_when(sexo == "Hombres" ~ 1, T ~ 0)) %>% 
+  group_by(grupo_edad) %>% 
+  summarize(nn = n(),
+            hombres = sum(hombre),
+            mujeres = nn-hombres, 
+            dci = sum(dcronica)/nn,
+            mean_edad_diff = mean(edad_diff),
+            sd_edad_diff = sd(edad_diff),
+            mean_talla_diff = mean(d_dia_talla),
+            sd_talla_diff = sd(d_dia_talla)) %>% 
+  ungroup()
+
+tbl %>% 
+  mutate(dci = scales::percent(dci, accuracy = 0.01), 
+         across(.cols = c(grupo_edad, nn, hombres, mujeres),
+                .fns = ~format(.x, big.mark = ","))) %>% 
+  kable(col.names = c("Grupo de edad", "Nro. de niños", "Hombres", "Mujeres", "DCI", 
+                      "Promedio de diferencia de edad", "Desviación estándar de diferencia de edad",
+                      "Promedio de diferencia en cm/día", "Desviación estándar de diferencia en cm/día"),
+        align = c("llllccccc"),
+        digits = 2) %>% 
+  kable_classic()
+
+```
+
+**Correlación**
+
+```{r, include=FALSE}
+#r3
+r2_wide <- r2 %>% 
+  select(id_per, levantamiento, talla) %>% 
+  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
+  filter(!is.na(endi) & !is.na(control))
+
+cor_r2 <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
+
+r2_wide <- r2 %>% 
+  filter(id_per %in% (r2_ok %>% pull(id_per))) %>% 
+  select(id_per, levantamiento, talla) %>% 
+  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
+  filter(!is.na(endi) & !is.na(control))
+
+cor_r2_ok <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
+
+#r3
+
+r3_wide <- r3 %>%
+  arrange(desc(edad)) %>% 
+  distinct(id_per, levantamiento, .keep_all = T) %>% 
+  select(id_per, levantamiento, talla) %>% 
+  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
+  filter(!is.na(endi) & !is.na(controlMSP))
+
+cor_r3 <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
+
+r3_wide <- r3 %>%
+  arrange(desc(edad)) %>% 
+  distinct(id_per, levantamiento, .keep_all = T) %>% 
+  filter(id_per %in% (r3_ok %>% pull(id_per))) %>% 
+  select(id_per, levantamiento, talla) %>% 
+  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
+  filter(!is.na(endi) & !is.na(controlMSP))
+
+cor_r3_ok <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
+
+```
+
+En Ronda 2, sin eliminar los valores implausibles por velocidad de crecimiento existe una correlacion de `r cor_r2` entre la última medición de control de Niño Sano y la medición ENDI. Eliminando los valores implausibles la correlación sube a `r cor_r2_ok`. Para Ronda 3, sin eliminar valores implausibles la correlación existe una correlación de `r cor_r3`. Eliminando los valores implausibles la correlación sube a `r cor_r3_ok`.
+
+## Velocidad de crecimiento
+
 ```{r gen_flags, include=FALSE}
 
 R3_filt <- R3_filt[sexo=="Hombres", p_sexo:=1]
@@ -398,8 +474,6 @@ R3_filt[, sexo:=NULL]
 
 ```
 
-
-
 ```{r flags_cat, include=FALSE}
 ### tabulado rangos de d_dia_talla 
 
@@ -423,7 +497,7 @@ prop_rangos_all <- prop_rangos_all[, .(d_dia_talla_cat, Numero_R2, Numero_R3, Po
 
 ```
 
-# Identificar mediciones ENDI MSP consistentes
+## Identificar mediciones ENDI MSP consistentes
 
 ```{r}
 colnames(prop_rangos_all) <- c("Categoría", "Ronda 1", "Ronda 2", "Ronda 1", "Ronda 2")
@@ -506,7 +580,7 @@ men5 | men2
 ```
 
 
-# Niños/as por grupos de edad 
+## Niños/as por grupos de edad 
 
 ```{r, include=FALSE}
 
@@ -627,89 +701,3 @@ descriptivos_all2 %>%
                      "Máximo" = 2)) 
 
 ```
-
-Ronda 3
-
-```{r est r3, echo=FALSE}
-
-tbl <- r3_ok %>% 
-  filter(edad_diff <= 30 & levantamiento == "endi" &
-           flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0) %>% 
-  mutate(grupo_edad = case_when(edad < 183 ~ "<6 meses",
-                                edad < 365 ~ "6-11 meses",
-                                edad < 731 ~ "12-23 meses",
-                                edad < 1096 ~ "24-35 meses",
-                                edad < 1461 ~ "36-47 meses",
-                                edad < 1826 ~ "48-59 meses"),
-         grupo_edad = factor(grupo_edad, levels = c("<6 meses", "6-11 meses", "12-23 meses",
-                                                       "24-35 meses", "36-47 meses", "48-59 meses")),
-         hombre = case_when(sexo == "Hombres" ~ 1, T ~ 0)) %>% 
-  group_by(grupo_edad) %>% 
-  summarize(nn = n(),
-            hombres = sum(hombre),
-            mujeres = nn-hombres, 
-            dci = sum(dcronica)/nn,
-            mean_edad_diff = mean(edad_diff),
-            sd_edad_diff = sd(edad_diff),
-            mean_talla_diff = mean(d_dia_talla),
-            sd_talla_diff = sd(d_dia_talla)) %>% 
-  ungroup()
-
-tbl %>% 
-  mutate(dci = scales::percent(dci, accuracy = 0.01), 
-         across(.cols = c(grupo_edad, nn, hombres, mujeres),
-                .fns = ~format(.x, big.mark = ","))) %>% 
-  kable(col.names = c("Grupo de edad", "Nro. de niños", "Hombres", "Mujeres", "DCI", 
-                      "Promedio de diferencia de edad", "Desviación estándar de diferencia de edad",
-                      "Promedio de diferencia en cm/día", "Desviación estándar de diferencia en cm/día"),
-        align = c("llllccccc"),
-        digits = 2) %>% 
-  kable_classic()
-
-```
-
-Correlación
-
-```{r, include=FALSE}
-#r3
-r2_wide <- r2 %>% 
-  select(id_per, levantamiento, talla) %>% 
-  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(control))
-
-cor_r2 <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
-
-r2_wide <- r2 %>% 
-  filter(id_per %in% (r2_ok %>% pull(id_per))) %>% 
-  select(id_per, levantamiento, talla) %>% 
-  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(control))
-
-cor_r2_ok <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
-
-#r3
-
-r3_wide <- r3 %>%
-  arrange(desc(edad)) %>% 
-  distinct(id_per, levantamiento, .keep_all = T) %>% 
-  select(id_per, levantamiento, talla) %>% 
-  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(controlMSP))
-
-cor_r3 <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
-
-r3_wide <- r3 %>%
-  arrange(desc(edad)) %>% 
-  distinct(id_per, levantamiento, .keep_all = T) %>% 
-  filter(id_per %in% (r3_ok %>% pull(id_per))) %>% 
-  select(id_per, levantamiento, talla) %>% 
-  pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(controlMSP))
-
-cor_r3_ok <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
-
-```
-
-En Ronda 2, sin eliminar los valores implausibles por velocidad de crecimiento existe una correlacion de `r cor_r2` entre la última medición de control de Niño Sano y la medición ENDI. Eliminando los valores implausibles la correlación sube a `r cor_r2_ok`. Para Ronda 3, sin eliminar valores implausibles la correlación existe una correlación de `r cor_r3`. Eliminando los valores implausibles la correlación sube a `r cor_r3_ok`.
-
-## Velocidad de crecimiento

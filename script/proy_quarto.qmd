@@ -1,7 +1,8 @@
 ---
-title: "VelocidadCrecimiento"
-format: revealjs
-editor: visual
+title: "Análisis Velocidad de crecimiento"
+format:
+  revealjs:
+    theme: [default, styles.css]
 ---
 
 ```{r librerias, include=FALSE}
@@ -9,6 +10,13 @@ library(tidyverse)
 library(kableExtra)
 library(data.table)
 library(openxlsx)
+library(collapse)
+library(ggplot2)
+library(patchwork)
+
+library(knitr)
+library(kableExtra)
+
 ```
 
 ```{r leer bases, include=FALSE}
@@ -24,8 +32,31 @@ ids_ok <- r3[levantamiento == "endi" & edad_diff <= 30, unique(id_per)]
 
 # 2) De esos niños, última y penúltima fila
 R3_ult <- r3[id_per %in% ids_ok,
+
+
+## Consistencia de las mediciones ENDI 
+
+
+```{r filtro_med_recientes, include=FALSE}
+
+r2 <- as.data.table(r2)
+r3 <- as.data.table(r3)
+
+filt_base <- function(bdd){
+  
+  # 1) Niños cuya fila endi tiene edad_diff < 30
+ids_ok <- bdd[levantamiento == "endi" & edad_diff <= 30, unique(id_per)]
+
+# 2) De esos niños, última y penúltima fila
+bdd_fil <- bdd[id_per %in% ids_ok,
                        .SD[tail(seq_len(.N), 2)],
                        by = id_per]
+
+return(bdd_fil)
+}
+
+R2_filt <- filt_base(r2)
+R3_filt <- filt_base(r3)
 
 ```
 
@@ -278,6 +309,322 @@ tbl %>%
         align = c("lrrrccccc"),
         digits = 2) %>% 
   kable_classic()
+```{r gen_flags, include=FALSE}
+
+R3_filt <- R3_filt[sexo=="Hombres", p_sexo:=1]
+R3_filt <- R3_filt[sexo=="Mujeres", p_sexo:=2]
+
+setnames(R2_filt, "sexo", "p_sexo")
+### revisar implausibles 
+
+rev_flags <- function(bdd){
+  
+bdd <- bdd %>% 
+  mutate(p_edadmeses = p_edadmeses %>% round(digits = 0), 
+         #se genera bandera de crecimiento negativo
+         flg_delta_talla_negativo = case_when(d_dia_talla < 0 ~ 1,
+                                              T ~ 0),
+         #se genera bandera de crecimiento acelerado
+         flg_delta_talla_positivo = case_when(
+           (p_sexo == '1' & p_edadmeses <= 2 & d_dia_talla > 0.185) |
+           (p_sexo == '1' & p_edadmeses == 3 & d_dia_talla > 0.155) |
+           (p_sexo == '1' & p_edadmeses == 4 & d_dia_talla > 0.13) |
+           (p_sexo == '1' & p_edadmeses == 5 & d_dia_talla > 0.111667) |
+           (p_sexo == '1' & p_edadmeses == 6 & d_dia_talla > 0.098333) |
+           (p_sexo == '1' & p_edadmeses == 7 & d_dia_talla > 0.088333) |
+           (p_sexo == '1' & p_edadmeses == 8 & d_dia_talla > 0.083333) |
+           (p_sexo == '1' & p_edadmeses == 9 & d_dia_talla > 0.08) |
+           (p_sexo == '1' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
+           (p_sexo == '1' & p_edadmeses == 11 & d_dia_talla > 0.075) |
+           (p_sexo == '1' & p_edadmeses == 12 & d_dia_talla > 0.073333) |
+           (p_sexo == '1' & p_edadmeses == 13 & d_dia_talla > 0.071667) |
+           (p_sexo == '1' & p_edadmeses == 14 & d_dia_talla > 0.07) |
+           (p_sexo == '1' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
+           (p_sexo == '1' & p_edadmeses == 16 & d_dia_talla > 0.066667) |
+           (p_sexo == '1' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
+           (p_sexo == '1' & p_edadmeses == 18 & d_dia_talla > 0.065) |
+           (p_sexo == '1' & p_edadmeses == 19 & d_dia_talla > 0.065) |
+           (p_sexo == '1' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
+           (p_sexo == '1' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
+           (p_sexo == '1' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
+           (p_sexo == '1' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
+           (p_sexo == '1' & p_edadmeses >= 24 & d_dia_talla > 0.061667) |
+           (p_sexo == '2' & p_edadmeses <= 2 & d_dia_talla > 0.175) |
+           (p_sexo == '2' & p_edadmeses == 3 & d_dia_talla > 0.143333) |
+           (p_sexo == '2' & p_edadmeses == 4 & d_dia_talla > 0.121667) |
+           (p_sexo == '2' & p_edadmeses == 5 & d_dia_talla > 0.106667) |
+           (p_sexo == '2' & p_edadmeses == 6 & d_dia_talla > 0.093333) |
+           (p_sexo == '2' & p_edadmeses == 7 & d_dia_talla > 0.085) |
+           (p_sexo == '2' & p_edadmeses == 8 & d_dia_talla > 0.081667) |
+           (p_sexo == '2' & p_edadmeses == 9 & d_dia_talla > 0.08) |
+           (p_sexo == '2' & p_edadmeses == 10 & d_dia_talla > 0.076667) |
+           (p_sexo == '2' & p_edadmeses == 11 & d_dia_talla > 0.075) |
+           (p_sexo == '2' & p_edadmeses == 12 & d_dia_talla > 0.071667) |
+           (p_sexo == '2' & p_edadmeses == 13 & d_dia_talla > 0.07) |
+           (p_sexo == '2' & p_edadmeses == 14 & d_dia_talla > 0.07) |
+           (p_sexo == '2' & p_edadmeses == 15 & d_dia_talla > 0.068333) |
+           (p_sexo == '2' & p_edadmeses == 16 & d_dia_talla > 0.068333) |
+           (p_sexo == '2' & p_edadmeses == 17 & d_dia_talla > 0.066667) |
+           (p_sexo == '2' & p_edadmeses == 18 & d_dia_talla > 0.066667) |
+           (p_sexo == '2' & p_edadmeses == 19 & d_dia_talla > 0.065) |
+           (p_sexo == '2' & p_edadmeses == 20 & d_dia_talla > 0.063333) |
+           (p_sexo == '2' & p_edadmeses == 21 & d_dia_talla > 0.063333) |
+           (p_sexo == '2' & p_edadmeses == 22 & d_dia_talla > 0.061667) |
+           (p_sexo == '2' & p_edadmeses == 23 & d_dia_talla > 0.061667) |
+           (p_sexo == '2' & p_edadmeses >= 24 & d_dia_talla > 0.06) ~ 1,
+           TRUE ~ 0),
+         #se genera bandera de medicion adecuada
+         flg_medicion_ok = case_when(flg_delta_talla_positivo != 0 |
+                                       flg_delta_talla_negativo != 0 ~ 0,
+                                     T ~ 1)) %>% 
+  fgroup_by(id_per) %>% 
+  #numero de crecimientos negativos y crecimientos exagerados por ninio
+  fmutate(n_talla_negativo = sum(flg_delta_talla_negativo),
+          n_talla_positivo = sum(flg_delta_talla_positivo),
+          #bandera de ninio apto para analisis o no
+          flg_nino_ok = case_when(n_talla_negativo > 2 |
+                                        n_talla_positivo > 3 ~ 0,
+                                      T ~ 1)) %>% 
+  fungroup()
+  
+  return(bdd)
+}
+
+
+R2_filt <- rev_flags(R2_filt)
+R3_filt <- rev_flags(R3_filt)
+
+R3_filt[, sexo:=NULL]
+
+```
+
+
+
+```{r flags_cat, include=FALSE}
+### tabulado rangos de d_dia_talla 
+
+R2_filt[flg_delta_talla_negativo==1, d_dia_talla_cat:="Medición ENDI menor a medición MSP"]
+R2_filt[flg_delta_talla_positivo==1, d_dia_talla_cat:="Velocidad de crecimiento por encima del rango esperado"]
+R2_filt[flg_delta_talla_negativo==0 & flg_delta_talla_positivo==0, d_dia_talla_cat:="Velocidad de crecimiento dentro del rango esperado"]
+
+R3_filt[flg_delta_talla_negativo==1, d_dia_talla_cat:="Medición ENDI menor a medición MSP"]
+R3_filt[flg_delta_talla_positivo==1, d_dia_talla_cat:="Velocidad de crecimiento por encima del rango esperado"]
+R3_filt[flg_delta_talla_negativo==0 & flg_delta_talla_positivo==0, d_dia_talla_cat:="Velocidad de crecimiento dentro del rango esperado"]
+
+
+prop_rangosR2 <- R2_filt[levantamiento=="endi", .(Num=.N), by=.(d_dia_talla_cat)][, prop:=(Num/sum(Num))*100]
+setnames(prop_rangosR2, c("Num", "prop"), c("Numero_R2", "Porcentaje_R2"))
+prop_rangosR3 <- R3_filt[levantamiento=="endi", .(Num=.N), by=.(d_dia_talla_cat)][, prop:=(Num/sum(Num))*100]
+setnames(prop_rangosR3, c("Num", "prop"), c("Numero_R3", "Porcentaje_R3"))
+
+prop_rangos_all <- merge(prop_rangosR2, prop_rangosR3, by="d_dia_talla_cat")
+
+prop_rangos_all <- prop_rangos_all[, .(d_dia_talla_cat, Numero_R2, Numero_R3, Porcentaje_R2, Porcentaje_R3)]
+
+```
+
+# Identificar mediciones ENDI MSP consistentes
+
+```{r}
+colnames(prop_rangos_all) <- c("Categoría", "Ronda 1", "Ronda 2", "Ronda 1", "Ronda 2")
+
+# 4. Generar la tabla con knitr y kableExtra
+knitr::kable(prop_rangos_all, format = "html", align = "c", caption = "Distribución categorías") |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) |>
+  add_header_above(c(" " = 1, "Número" = 2, "Porcentaje" = 2)) |>
+  # Ejemplo de combinación de filas (Columna Región)
+  collapse_rows(columns = 1, valign = "middle")
+
+```
+
+
+## Densidad de crecimiento promedio por dia (solo casos cuya velocidad de crecimiento se encuentra dentro del rango aceptable)
+
+```{r, include=FALSE}
+
+### construccion de grupos de edad (considerando edad en meses)
+
+setnames(R3_filt, "edad", "edaddias")
+R2_filt <- R2_filt %>% 
+    mutate(gedad = case_when(
+      edaddias < 183 ~ "<6m",
+      edaddias < 365 ~ "6m - <1a",
+      edaddias < 731 ~ "1a - <2a",
+      edaddias < 1096 ~ "2a - <3a",
+      edaddias < 1461 ~ "3a - <4a",
+      edaddias < 1826 ~ "4a - <5a",
+      TRUE ~ NA_character_ 
+    ))
+
+R3_filt <- R3_filt %>% 
+    mutate(gedad = case_when(
+      edaddias < 183 ~ "<6m",
+      edaddias < 365 ~ "6m - <1a",
+      edaddias < 731 ~ "1a - <2a",
+      edaddias < 1096 ~ "2a - <3a",
+      edaddias < 1461 ~ "3a - <4a",
+      edaddias < 1826 ~ "4a - <5a",
+      TRUE ~ NA_character_ 
+    ))
+
+### graficos
+
+R2_filt[, peso:=NULL]
+R3_filt[, peso:=NULL]
+
+setnames(R3_filt, "n_ctlr", "n_ctrl")
+
+R2_filt$fuente <- "Ronda 2"
+R3_filt$fuente <- "Ronda 3"
+
+R_comb <- rbind(R2_filt, R3_filt)
+
+men5 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado"), ], aes(x = fuente, y = d_dia_talla, fill = fuente)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "Niños/as menores de 5 años",
+    y = "Valores"
+  ) +
+  theme_minimal()
+
+men2 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado") & edaddias<731, ], aes(x = fuente, y = d_dia_talla, fill = fuente)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "Niños/as menores de 2 años",
+    y = "Valores"
+  ) +
+  theme_minimal()
+
+ 
+```
+
+Niños/as menores de 5 y menores de 2 años 
+
+```{r}
+men5 | men2
+
+```
+
+
+# Niños/as por grupos de edad 
+
+```{r, include=FALSE}
+
+g1 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado") & gedad %in% c("<6m"), ], aes(x = fuente, y = d_dia_talla, fill = fuente)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "<6m",
+    x = "Fuente de datos",
+    y = "Valores"
+  ) +
+  theme_minimal()
+
+
+g2 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado") & gedad %in% c("6m - <1a"), ], aes(x = fuente, y = d_dia_talla, fill = fuente)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "6m - <1a",
+    x = "Fuente de datos",
+    y = "Valores"
+  ) +
+  theme_minimal()
+
+g3 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado") & gedad %in% c("1a - <2a"), ], aes(x = fuente, y = d_dia_talla, fill = fuente)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "1a - <2a",
+    x = "Fuente de datos",
+    y = "Valores"
+  ) +
+  theme_minimal()
+
+
+g4 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado") & gedad %in% c("2a - <3a"), ], aes(x = fuente, y = d_dia_talla, fill = fuente)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "2a - <3a",
+    x = "Fuente de datos",
+    y = "Valores"
+  ) +
+  theme_minimal()
+
+g5 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado") & gedad %in% c("3a - <4a"), ], aes(x = fuente, y = d_dia_talla, fill = fuente)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "3a - <4a",
+    x = "Fuente de datos",
+    y = "Valores"
+  ) +
+  theme_minimal()
+
+g6 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado") & gedad %in% c("4a - <5a"), ], aes(x = fuente, y = d_dia_talla, fill = fuente)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(
+    title = "4a - <5a",
+    x = "Fuente de datos",
+    y = "Valores"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+(g1 | g2)/(g3|g4)/(g5|g6)
+```
+
+## Estadisticos descriptivos del crecimiento promedio por día 
+
+```{r, include=FALSE}
+
+descriptivosR2 <- R2_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado"), .(
+  N = .N,
+  Media = mean(d_dia_talla, na.rm = TRUE),
+  Desv_Est = sd(d_dia_talla, na.rm = TRUE),
+  Mediana = median(d_dia_talla, na.rm = TRUE),
+  Minimo = min(d_dia_talla, na.rm = TRUE),
+  Maximo = max(d_dia_talla, na.rm = TRUE),
+  Ronda="R2"
+), by=.(gedad)]
+
+descriptivosR3 <- R3_filt[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de crecimiento dentro del rango esperado"), .(
+  N = .N,
+  Media = mean(d_dia_talla, na.rm = TRUE),
+  Desv_Est = sd(d_dia_talla, na.rm = TRUE),
+  Mediana = median(d_dia_talla, na.rm = TRUE),
+  Minimo = min(d_dia_talla, na.rm = TRUE),
+  Maximo = max(d_dia_talla, na.rm = TRUE),
+  Ronda="R3"
+), by=.(gedad)]
+
+descriptivos_all <- rbind(descriptivosR2, descriptivosR3)
+
+descriptivos_all2 <- dcast(descriptivos_all, gedad ~ Ronda, value.var = c("N", "Media", "Desv_Est", "Mediana", "Minimo", "Maximo"))
+
+descriptivos_all2 <- descriptivos_all2[, gedad:=factor(gedad, levels = c("<6m", "6m - <1a", "1a - <2a", "2a - <3a", "3a - <4a", "4a - <5a"))][order(gedad)][, .(gedad, N_R2, N_R3, Media_R2, Media_R3, Desv_Est_R2, Desv_Est_R3, Mediana_R2, Mediana_R3, Maximo_R2, Maximo_R3)]
+
+```
+
+
+```{r}
+
+colnames(descriptivos_all2) <- c("Grupo Edad", 
+                        "Ronda 2", "Ronda 3", 
+                        "Ronda 2", "Ronda 3", 
+                       "Ronda 2", "Ronda 3", 
+                        "Ronda 2", "Ronda 3", 
+                        "Ronda 2", "Ronda 3")
+
+# 3. Generar la tabla con formato avanzado
+descriptivos_all2 %>%
+  kable(format = "html", digits = 3, align = "c", caption = "Resumen Estadístico por Grupo de Edad (R2 vs R3)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, 
+                     "Tamaño Muestra (N)" = 2, 
+                     "Media" = 2, 
+                     "Desv. Estándar" = 2, 
+                     "Mediana" = 2, 
+                     "Máximo" = 2)) 
 
 ```
 

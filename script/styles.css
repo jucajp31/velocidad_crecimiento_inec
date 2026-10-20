@@ -1,0 +1,5 @@
+/*-- scss:defaults --*/
+$presentation-font-size-root: 15px; /* Tamaño base del texto general (por defecto es 40px) */
+$presentation-h1-font-size: 2.2em;  /* Tamaño para títulos principales */
+$presentation-h2-font-size: 1.5em;  /* Tamaño para subtítulos de diapositiva */
+$presentation-h3-font-size: 1.2em;

@@ -48,7 +48,6 @@ R3_filt <- filt_base(r3)
 
 ```
 
-
 ```{r gen_flags, include=FALSE}
 
 R3_filt <- R3_filt[sexo=="Hombres", p_sexo:=1]
@@ -177,7 +176,7 @@ knitr::kable(prop_rangos_all, format = "html", align = "c", caption = "Distribuc
 
 ```
 
-Entre R3 y R2, es menor el porcentaje de mediciones ENDI que sugieren decrecimientos respecto a la última medición disponible en la LIS, y es mayor el porcentaje de mediciones que muestran velocidades de crecimiento por encima de los umbrales considerados posibles. El porcentaje de mediciones ENDI que muestran velocidades de crecimiento dentro del rango esperado frente a la ultima medicion disponible en la LIS se mantiene estable. 
+Entre R3 y R2, es menor el porcentaje de mediciones ENDI que sugieren decrecimientos respecto a la última medición disponible en la LIS, y es mayor el porcentaje de mediciones que muestran velocidades de crecimiento por encima de los umbrales considerados posibles. El porcentaje de mediciones ENDI que muestran velocidades de crecimiento dentro del rango esperado frente a la ultima medicion disponible en la LIS se mantiene estable.
 
 # Inconsistencias por sexo y provincia-Ronda 2
 
@@ -276,7 +275,6 @@ r2_ok %>%
   kable_classic()
 
 ```
-
 
 # Inconsistencias por sexo y provincia-Ronda 3
 
@@ -417,7 +415,6 @@ cor_r3_ok <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
 
 En Ronda 2, sin eliminar los valores implausibles por velocidad de crecimiento existe una correlacion de `r cor_r2` entre la última medición de control de Niño Sano y la medición ENDI. Eliminando los valores implausibles la correlación sube a `r cor_r2_ok`. Para Ronda 3, sin eliminar valores implausibles la correlación existe una correlación de `r cor_r3`. Eliminando los valores implausibles la correlación sube a `r cor_r3_ok`.
 
-
 ```{r est r2, include=FALSE}
 
 tbl <- r2_ok %>% 
@@ -455,8 +452,6 @@ tbl %>%
   kable_classic()
 
 ```
-
-
 
 ```{r est r3, include=FALSE}
 
@@ -496,7 +491,7 @@ tbl %>%
 
 ```
 
-## Estadisticos descriptivos del crecimiento promedio por día 
+## Estadisticos descriptivos del crecimiento promedio por día
 
 ```{r, include=FALSE}
 
@@ -580,8 +575,6 @@ descriptivos_dcronica <- descriptivos_all2[, gedad:=factor(gedad, levels = c("<6
 
 ```
 
-
-
 ```{r}
 
 colnames(descriptivos_all3) <- c("Grupo Edad", 
@@ -605,7 +598,7 @@ descriptivos_all3 %>%
 
 ```
 
-Los registros recientes de mediciones de talla registrados en la LIS corresponden principalmente a niños menores de 2 años. Considerando este grupo, se observa un aumento en el crecimiento mediano por día de 0.006cm (que corresponde a 0.18cm por mes) en niños menores de 6 meses, y de 0.002cm (0.06cm por mes) en niños de 6 meses a 1 año. 
+Los registros recientes de mediciones de talla registrados en la LIS corresponden principalmente a niños menores de 2 años. Considerando este grupo, se observa un aumento en el crecimiento mediano por día de 0.006cm (que corresponde a 0.18cm por mes) en niños menores de 6 meses, y de 0.002cm (0.06cm por mes) en niños de 6 meses a 1 año.
 
 ```{r, include=FALSE}
 ### graficos
@@ -638,7 +631,6 @@ men2 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad 
 
  
 ```
-
 
 ```{r, include=FALSE}
 
@@ -708,14 +700,12 @@ g6 <- ggplot(R_comb[levantamiento=="endi" & d_dia_talla_cat %in% c("Velocidad de
 
 # Niños de 1 a menos de 3 años
 
-
 ```{r}
 (g3|g4)
 
 ```
 
-
-# Desnutrición crónica 
+# Desnutrición crónica
 
 ```{r}
 
@@ -746,8 +736,4 @@ descriptivos_dcronica %>%
 
 ```
 
-En ronda 2, la prevalencia de desnutrición crónica infantil en menores de 2 años considerando las mediciones realizadas en el marco de la ENDI, se encontraba por encima de la prevalencia de DCI considerando las mediciones recientes disponibles en la LIS, principalmente en el grupo de 1 a dos años, con brechas que oscilan entre 1.5 y 3.5 puntos porcentuales. Existen diferencias menores en la prevalencia de DCI segun ambas fuentes, en la ronda 3, con diferencias que se encuentran por debajo de un punto porcentual. Entre R2 y R3, la caída más fuerte en la prevalencia de DCI se observa en el grupo de niños de 6m a <1a, en una magnitud consistente tanto segun ENDI como segun MSP (6 pp segun ENDI y 5 pp según MSP)
-
-
-
-
+En ronda 2, la prevalencia de desnutrición crónica infantil en menores de 2 años considerando las mediciones realizadas en el marco de la ENDI, se encuentran por encima de la prevalencia de DCI considerando las mediciones recientes disponibles en la LIS, principalmente en el grupo de 1 a dos años, con brechas que oscilan entre 1.5 y 3.5 puntos porcentuales. Existen diferencias menores en la prevalencia de DCI segun ambas fuentes, en la ronda 3, con diferencias que se encuentran por debajo de un punto porcentual. Entre R2 y R3, la caída más fuerte en la prevalencia de DCI se observa en el grupo de niños de 6m a \<1a, en una magnitud consistente tanto segun ENDI como segun MSP (6 pp segun ENDI y 5 pp según MSP)

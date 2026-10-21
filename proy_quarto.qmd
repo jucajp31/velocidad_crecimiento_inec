@@ -376,69 +376,121 @@ r3_ok %>%
 
 ```{r, include=FALSE}
 #r3
-r2_wide <- r2 %>% 
+r2_wide_imp <- r2 %>% 
+  filter(id_per %in% (r2_ok %>% 
+                        pull(id_per))) %>% 
   select(id_per, levantamiento, talla) %>% 
   pivot_wider(names_from = levantamiento, values_from = talla) %>% 
   filter(!is.na(endi) & !is.na(control))
 
-cor_r2 <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
+cor_r2 <- cor(r2_wide_imp$endi, r2_wide_imp$control) %>% round(4)
 
 r2_wide <- r2 %>% 
-  filter(id_per %in% (r2_ok %>% pull(id_per))) %>% 
+  filter(id_per %in% (r2_ok %>% 
+                        filter(flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0) %>% 
+                        pull(id_per))) %>% 
   select(id_per, levantamiento, talla) %>% 
   pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(control))
+  filter(!is.na(endi) & !is.na(control)) %>% 
+  mutate(tipo = "Plausible")
 
-cor_r2_ok <- cor(r2_wide$endi, r2_wide$control) %>% round(3)
+cor_r2_ok <- cor(r2_wide$endi, r2_wide$control) %>% round(4)
+
+r2_wide_imp <- r2_wide_imp %>% 
+  filter(!(id_per %in% (r2_wide %>% pull(id_per)))) %>% 
+  mutate(tipo = case_when( endi > control ~ "Implausible positivo",
+                           T ~ "Implausible negativo"))
 
 #r3
 
-r3_wide <- r3 %>%
+r3_wide_imp <- r3 %>%
+  filter(id_per %in% (r3_ok %>% 
+                        pull(id_per))) %>% 
   arrange(desc(edad)) %>% 
   distinct(id_per, levantamiento, .keep_all = T) %>% 
   select(id_per, levantamiento, talla) %>% 
   pivot_wider(names_from = levantamiento, values_from = talla) %>% 
   filter(!is.na(endi) & !is.na(controlMSP))
 
-cor_r3 <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
+cor_r3 <- cor(r3_wide_imp$endi, r3_wide_imp$controlMSP) %>% round(4)
 
 r3_wide <- r3 %>%
   arrange(desc(edad)) %>% 
+  filter(id_per %in% (r3_ok %>% 
+                        filter(flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0) %>% 
+                        pull(id_per))) %>% 
   distinct(id_per, levantamiento, .keep_all = T) %>% 
   filter(id_per %in% (r3_ok %>% pull(id_per))) %>% 
   select(id_per, levantamiento, talla) %>% 
   pivot_wider(names_from = levantamiento, values_from = talla) %>% 
-  filter(!is.na(endi) & !is.na(controlMSP))
+  filter(!is.na(endi) & !is.na(controlMSP)) %>% 
+  mutate(tipo = "Plausible")
 
-cor_r3_ok <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(3)
+cor_r3_ok <- cor(r3_wide$endi, r3_wide$controlMSP) %>% round(4)
 
-r2_graph <- ggplot(r2_ok %>% 
-                     filter(levantamiento == "endi" & edad_diff <= 30 &
-                              flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0)) + 
-  geom_point(aes(x = edad_diff, y = talla_diff, alpha = p_edadmeses)) +
-  scale_alpha(range = c(0.2, 0.9), name = "Edad meses") +
-  ylim(0,5.1)+
+r3_wide_imp <- r3_wide_imp %>% 
+  filter(!(id_per %in% (r3_wide %>% pull(id_per)))) %>% 
+  mutate(tipo = case_when( endi > controlMSP ~ "Implausible positivo",
+                           T ~ "Implausible negativo"))
+
+r2_graph <- ggplot() +
+  geom_point(data = r2_wide, aes(x = endi, y = control), alpha = 0.5, size = 0.5, color = "gray40",
+             show.legend = T)+
+  geom_smooth(data = r2_wide_imp %>% filter(tipo == "Implausible positivo"),
+              method = "lm",
+              aes(x=endi, y =control),
+              linetype = 4,
+              color = "black",
+              formula = y~x,
+              se = F,
+              show.legend = T)+
+   geom_smooth(data = r2_wide_imp %>% filter(tipo == "Implausible negativo"),
+              method = "lm",
+              aes(x=endi, y =control),
+              linetype = 4,
+              se = F,
+              color = "royalblue4",
+              formula = y~x,) +
+  ylim(44, 116)+ 
+  xlim(44,116) +
   labs(title = "Ronda 2")+
-  xlab("Diferencia de edad en días") +
-  ylab("Diferencia de talla en cm") +
+  xlab("Talla en ENDI") +
+  ylab("Talla en MSP") +
   theme_bw()
 
-r3_graph <- ggplot(r3_ok %>% 
-                     filter(levantamiento == "endi" & edad_diff <= 30 &
-                              flg_delta_talla_negativo == 0 & flg_delta_talla_positivo == 0)) + 
-  geom_point(aes(x = edad_diff, y = talla_diff, alpha = p_edadmeses)) +
-  scale_alpha(range = c(0.2, 0.9), name = "Edad meses") +
-  ylim(0,5.1)+
+r3_graph <- ggplot() +
+  geom_point(data = r3_wide, aes(x = endi, y = controlMSP, colour = "Plausibles"),
+             alpha = 0.5, 
+             size = 0.5)+
+  geom_smooth(data = r3_wide_imp %>% filter(tipo == "Implausible positivo"),
+              method = "lm",
+              aes(x=endi, y =controlMSP, colour = "Implausible positivo"),
+              linetype = 4,
+              formula = y~x,
+              se = F)+
+   geom_smooth(data = r3_wide_imp %>% filter(tipo == "Implausible negativo"),
+              method = "lm",
+              aes(x=endi, y =controlMSP, colour = "Implausible negativo"),
+              formula = y~x,
+              linetype = 4, 
+              se = F) +
+  ylim(44, 116)+ 
+  xlim(44,116) +
+  scale_colour_manual(name = "Tipo de observación",
+                      values = c("Plausibles" = "gray40",
+                                 "Implausible positivo" = "black",
+                                 "Implausible negativo" = "royalblue4"))+
+  guides(colour = guide_legend(override.aes = list(size = 2)))+
   labs(title = "Ronda 3")+
-  xlab("Diferencia de edad en días") +
-  ylab("Diferencia de talla en cm") +
+  xlab("Talla en ENDI") +
+  ylab("Talla en MSP") +
   theme_bw()
 
 ```
 
-En Ronda 2, sin eliminar los valores implausibles por velocidad de crecimiento existe una correlacion de `r cor_r2` entre la última medición de control de Niño Sano y la medición ENDI. Eliminando los valores implausibles la correlación sube a `r cor_r2_ok`. Para Ronda 3, sin eliminar valores implausibles la correlación existe una correlación de `r cor_r3`. Eliminando los valores implausibles la correlación sube a `r cor_r3_ok`.
+En Ronda 2, sin eliminar los valores implausibles por velocidad de crecimiento existe una correlacion de **`r cor_r2`** entre la última medición de control de Niño Sano y la medición ENDI para niños con una diferencia máxima de 30 días entre mediciones. Eliminando los valores implausibles la correlación sube a **`r cor_r2_ok`**. Para Ronda 3, sin eliminar valores implausibles la correlación existe una correlación de **`r cor_r3`**. Eliminando los valores implausibles la correlación sube a **`r cor_r3_ok`**.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 r2_graph | r3_graph
 ```
 

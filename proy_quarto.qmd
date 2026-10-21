@@ -434,10 +434,13 @@ r3_wide_imp <- r3_wide_imp %>%
                            T ~ "Implausible negativo"))
 
 r2_graph <- ggplot() +
-  geom_point(data = r2_wide, aes(x = endi, y = control), alpha = 0.5, size = 0.5, color = "gray40",
-             show.legend = T)+
+  geom_smooth(data = r2_wide, aes(x = endi, y = control), ,
+              method = "loess",
+              formula = y~x, 
+              se = F,
+              color = "darkred")+
   geom_smooth(data = r2_wide_imp %>% filter(tipo == "Implausible positivo"),
-              method = "lm",
+              method = "loess",
               aes(x=endi, y =control),
               linetype = 4,
               color = "black",
@@ -445,7 +448,7 @@ r2_graph <- ggplot() +
               se = F,
               show.legend = T)+
    geom_smooth(data = r2_wide_imp %>% filter(tipo == "Implausible negativo"),
-              method = "lm",
+              method = "loess",
               aes(x=endi, y =control),
               linetype = 4,
               se = F,
@@ -459,17 +462,18 @@ r2_graph <- ggplot() +
   theme_bw()
 
 r3_graph <- ggplot() +
-  geom_point(data = r3_wide, aes(x = endi, y = controlMSP, colour = "Plausibles"),
-             alpha = 0.5, 
-             size = 0.5)+
+  geom_smooth(data = r3_wide, aes(x = endi, y = controlMSP, colour = "Plausibles"),
+              method = "loess",
+              formula = y~x, 
+              se = F)+
   geom_smooth(data = r3_wide_imp %>% filter(tipo == "Implausible positivo"),
-              method = "lm",
+              method = "loess",
               aes(x=endi, y =controlMSP, colour = "Implausible positivo"),
               linetype = 4,
               formula = y~x,
               se = F)+
    geom_smooth(data = r3_wide_imp %>% filter(tipo == "Implausible negativo"),
-              method = "lm",
+              method = "loess",
               aes(x=endi, y =controlMSP, colour = "Implausible negativo"),
               formula = y~x,
               linetype = 4, 
@@ -477,7 +481,7 @@ r3_graph <- ggplot() +
   ylim(44, 116)+ 
   xlim(44,116) +
   scale_colour_manual(name = "Tipo de observación",
-                      values = c("Plausibles" = "gray40",
+                      values = c("Plausibles" = "darkred",
                                  "Implausible positivo" = "black",
                                  "Implausible negativo" = "royalblue4"))+
   guides(colour = guide_legend(override.aes = list(size = 2)))+
